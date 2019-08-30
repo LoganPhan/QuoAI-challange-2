@@ -1,8 +1,10 @@
 package com.quoai.challenge.service;
 
-import java.util.Map;
+import java.util.List;
+
+import com.quoai.challenge.dto.RepoDto;
 
 public interface MetricService {
 
-	Map<Long, Long> downloadGitHubDataSource();
+	List<RepoDto> downloadGitHubDataSource();
 }

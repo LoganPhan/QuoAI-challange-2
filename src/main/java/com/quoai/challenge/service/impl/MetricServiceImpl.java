@@ -7,10 +7,10 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -34,11 +34,8 @@ public class MetricServiceImpl implements MetricService {
 
 	static final String DATA_GH_ARCHIVE_DOMAIN = "https://data.gharchive.org/";
 	static final String USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Safari/537.36";
-	static final String JSON_GZ_EXTENSION = ".json.gz";
-	private Map<Long, OrgDto> organizations = new ConcurrentHashMap<>();
+	static final String FILE_EXTENSION = ".json.gz";
 	private Map<Long, RepoDto> repositories = new ConcurrentHashMap<>();
-	private Map<Long, Set<Long>> orgIndexInRepos = new ConcurrentHashMap<>();
-	private Map<Long, Long> totalPush = new ConcurrentHashMap<>();
 	
 	static final Integer DAYS = 30;
 	static final Integer HOURS = 24;
@@ -49,9 +46,9 @@ public class MetricServiceImpl implements MetricService {
 	private ExecutorService executorService;
 	
 	@Override
-	public Map<Long, Long> downloadGitHubDataSource() {
+	public List<RepoDto> downloadGitHubDataSource() {
 		long startTime = System.currentTimeMillis();
-		LocalDateTime cal = LocalDateTime.now().minusDays(DAYS);
+		LocalDateTime cal = LocalDateTime.now().minusDays(1).minusDays(DAYS);
 		DateTimeFormatter formmat1 = DateTimeFormatter.ofPattern("yyyy-MM-dd", Locale.ENGLISH);
 		executorService = Executors.newFixedThreadPool(DAYS * HOURS);
 		try {
@@ -59,10 +56,10 @@ public class MetricServiceImpl implements MetricService {
 				cal = cal.plusDays(1);
 				String date = formmat1.format(cal);
 				for (int j = 0; j < HOURS; j++) {
-					String suffix = date + "-" + j + JSON_GZ_EXTENSION;
+					String filePath = date + "-" + j + FILE_EXTENSION;
 					executorService.submit(() -> {
 						try {
-							download(suffix);
+							download(filePath);
 						} catch (IOException e) {
 						System.out.println(e.getMessage());
 						}
@@ -76,11 +73,20 @@ public class MetricServiceImpl implements MetricService {
 		} catch (Exception e ) {
 			System.out.println(e.getMessage());
 		}
+		
 		long total = (System.currentTimeMillis() - startTime) / 1000;
 		System.out.println("Time send: " + total);
 		System.out.println("Total Respositories: " + repositories.size());
-		System.out.println("Total Repo in Push: " + totalPush.size());
-		return totalPush;
+		List<RepoDto> list = new ArrayList<RepoDto>();
+		int count = 0;
+		for (Map.Entry<Long, RepoDto> ele : repositories.entrySet()) {
+			if(count == 100) {
+				break;
+			}
+			list.add(ele.getValue());
+			count ++;
+		}
+		return list;
 	}
 	
 	private void download(String suffix) throws IOException {
@@ -99,16 +105,20 @@ public class MetricServiceImpl implements MetricService {
 			while ((content = br.readLine()) != null) {
 				if(content.contains("\"type\":\"PushEvent\"")) {
 					Response<PushEventDto> pushDto = objectMapper.readValue(content, new TypeReference<Response<PushEventDto>>() {});
-					setOrganizations(pushDto.getOrg(), pushDto.getRepo());
-					setRepositories(pushDto.getRepo());
-					setTotalPushes(pushDto.getRepo().getId(), pushDto.getPayLoad());
-					pushDto = null;
+					RepoDto repoDto = pushDto.getRepo();
+					if(!ObjectUtils.isEmpty(pushDto.getOrg())) {
+						OrgDto orgDto = pushDto.getOrg();
+						repoDto.setOrgId(orgDto.getId());
+						repoDto.setOrgName(orgDto.getOrgName());
+					}
+					setRepositories(repoDto);
+					setTotalPushes(repoDto.getId(), pushDto.getPayLoad().getSize());
 				}
 				
 			}
 			System.out.println("Count: " + DATA_GH_ARCHIVE_DOMAIN + suffix);
 		} catch (IOException e) {
-			e.printStackTrace();
+			System.out.println(e.getMessage());
 		}
 		finally {
 			if(gzip!=null) {
@@ -120,31 +130,17 @@ public class MetricServiceImpl implements MetricService {
 		}
 	}
 	
-	private void setOrganizations(OrgDto orgDto, RepoDto repoDto) {
-		if(!ObjectUtils.isEmpty(orgDto)) {
-			organizations.putIfAbsent(orgDto.getId(), orgDto);
-			setOrgIndexInRepos(orgDto.getId(), repoDto);
-		}
-	}
-	
-	private void setOrgIndexInRepos(Long orgId, RepoDto repoDto) {
-		Set<Long> repoIds = orgIndexInRepos.computeIfAbsent(orgId, k -> new HashSet<Long>());
-		synchronized (repoIds) {
-			repoIds.add(repoDto.getId());
-			orgIndexInRepos.putIfAbsent(orgId, repoIds);
-		}
-	}
-	
 	private void setRepositories(RepoDto repoDto) {
 		repositories.putIfAbsent(repoDto.getId(), repoDto);
 	}
 	
-	private void setTotalPushes(Long repoId, PushEventDto pushDto) {
-		totalPush.compute(repoId, (key, val) -> {
+	private void setTotalPushes(Long repoId, int commits) {
+		repositories.compute(repoId, (key, val) -> {
 			if (val == null) {
-				return 0l;
+				return val;
 			} else {
-				return val + pushDto.getSize();
+				val.setTotalCommits(val.getTotalCommits() + commits);
+				return val;
 			}
 		});
 	}

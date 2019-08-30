@@ -15,4 +15,10 @@ public class RepoDto {
 	private String repoName;
 	
 	private String url;
+	
+	private Long orgId;
+	
+	private String orgName;
+	
+	private int totalCommits;
 }

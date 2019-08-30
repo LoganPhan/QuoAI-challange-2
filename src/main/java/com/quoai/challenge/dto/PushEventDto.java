@@ -12,10 +12,10 @@ public class PushEventDto{
 	@JsonProperty("push_id")
 	private Long pushId;
 	
-	private Long size;
+	private int size;
 	
 	@JsonProperty("distinct_size")
-	private Integer distinctSize;
+	private int distinctSize;
 	
 	private String ref;
 	
