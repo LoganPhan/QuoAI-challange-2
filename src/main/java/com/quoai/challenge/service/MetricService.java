@@ -1,10 +1,8 @@
 package com.quoai.challenge.service;
 
-import java.util.List;
-
-import com.quoai.challenge.dto.RepoDto;
+import java.io.IOException;
 
 public interface MetricService {
 
-	List<RepoDto> downloadGitHubDataSource();
+	String downloadGitHubDataSource() throws IOException;
 }

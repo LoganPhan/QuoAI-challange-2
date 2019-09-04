@@ -1,0 +1,12 @@
+package com.quoai.challenge.dto;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+import lombok.Data;
+
+@Data
+@JsonIgnoreProperties(ignoreUnknown=true)
+public class AuthorDto {
+	private String email;
+	private String name;
+}

@@ -59,12 +59,19 @@
 			<artifactId>jackson-datatype-jsr310</artifactId>
 		</dependency>
 
+		<dependency>
+			<groupId>com.fasterxml.jackson.dataformat</groupId>
+			<artifactId>jackson-dataformat-csv</artifactId>
+		</dependency>
+
 		<!-- Developer Tools -->
 		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
 			<scope>provided</scope>
 		</dependency>
+
+
 	</dependencies>
 
 	<build>
@@ -97,53 +104,18 @@
 				</executions>
 			</plugin>
 
-			<!-- <plugin>
-				<groupId>io.fabric8</groupId>
-				<artifactId>docker-maven-plugin</artifactId>
-				<version>0.15.9</version>
-				<extensions>true</extensions>
-				<configuration>
-					<images>
-						<image>
-							<name>${docker.repository.name}/${project.name}:${project.version}</name>
-							<alias>${project.artifactId}</alias>
-							<build>
-								<from>${docker.repository.name}/accent-docker-base-java:1.0.0</from>
-								<tags>define additional tags for the image
-									<tag>latest</tag>
-								</tags>
-								<assembly>
-									<descriptor>assembly.xml</descriptor>
-								</assembly>
-								<ports>
-									<port>8080</port>
-								</ports>
-								<cmd>
-									<shell>
-										java -jar /maven/${project.artifactId}-${project.version}.jar
-									</shell>
-								</cmd>
-							</build>
-						</image>
-					</images>
-				</configuration>
-				<executions>
-					<execution>
-						<id>build-docker-image</id>
-						<phase>package</phase>
-						<goals>
-							<goal>build</goal>
-						</goals>
-					</execution>
-					<execution>
-						<id>push-docker-image-to-registry</id>
-						<phase>deploy</phase>
-						<goals>
-							<goal>push</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin> -->
+			<!-- <plugin> <groupId>io.fabric8</groupId> <artifactId>docker-maven-plugin</artifactId> 
+				<version>0.15.9</version> <extensions>true</extensions> <configuration> <images> 
+				<image> <name>${docker.repository.name}/${project.name}:${project.version}</name> 
+				<alias>${project.artifactId}</alias> <build> <from>${docker.repository.name}/accent-docker-base-java:1.0.0</from> 
+				<tags>define additional tags for the image <tag>latest</tag> </tags> <assembly> 
+				<descriptor>assembly.xml</descriptor> </assembly> <ports> <port>8080</port> 
+				</ports> <cmd> <shell> java -jar /maven/${project.artifactId}-${project.version}.jar 
+				</shell> </cmd> </build> </image> </images> </configuration> <executions> 
+				<execution> <id>build-docker-image</id> <phase>package</phase> <goals> <goal>build</goal> 
+				</goals> </execution> <execution> <id>push-docker-image-to-registry</id> 
+				<phase>deploy</phase> <goals> <goal>push</goal> </goals> </execution> </executions> 
+				</plugin> -->
 			<!-- Used by build.sh to strip SNAPSHOT version for production builds -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>

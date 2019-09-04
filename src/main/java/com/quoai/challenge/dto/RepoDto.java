@@ -20,5 +20,7 @@ public class RepoDto {
 	
 	private String orgName;
 	
-	private int totalCommits;
+	private long totalCommits;
+	
+	private long releaseNumber;
 }

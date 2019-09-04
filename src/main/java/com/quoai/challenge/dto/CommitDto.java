@@ -12,7 +12,7 @@ public class CommitDto {
 	private String sha;
 	
 	@JsonProperty("author")
-	private Author author;
+	private AuthorDto author;
 	
 	@JsonProperty("message")
 	private String message;
@@ -21,10 +21,5 @@ public class CommitDto {
 	
 	@JsonProperty("pusher_type")
 	private String url;
-	
-	@Data
-	class Author {
-		private String email;
-		private String name;
-	}
+
 }
